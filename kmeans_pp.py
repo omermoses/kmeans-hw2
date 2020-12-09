@@ -29,10 +29,8 @@ def find_next_centroids(observations_matrix, centroids_matrix, K, N, centroid_in
         min_d_arr = np.full(N, -1)
         for observation_index in range(N):
             # find ths distance for all observations
-            # print(observations_matrix[observation_index])
             min_d_arr[observation_index] = squared_euclidean_distance(observations_matrix[observation_index],
                                                                       centroids_matrix, i)
-            # print(d)
         min_d_arr = min_d_arr / (min_d_arr.sum())
         next_centroid_index = np.random.choice(N, 1, p=min_d_arr)
         centroid_index_arr[i] = next_centroid_index
@@ -43,12 +41,6 @@ def find_next_centroids(observations_matrix, centroids_matrix, K, N, centroid_in
 def squared_euclidean_distance(observation, centroids_df, i):
     """find cluster’s centroid using squared Euclidean distance
     observation and centroid are lists of size D"""
-    dist = 0
-    # for centroid_index in centroids_df.index:
-    #     # for index in range(len(observation)):
-    #     #     dist += (observation[index] - centroids_df[centroid_index][index]) ** 2
-    # print(centroids_df.values-observation.values)
-    # print(np.power(centroids_df.values-observation.values,2).sum(axis=1).min())
     dist = np.power((centroids_df - observation), 2).sum(axis=1).min()
     return dist
 
@@ -69,5 +61,7 @@ if __name__ == '__main__':
     elif args.K >= args.N:
         print("K should be smaller then N")
         exit(1)
+
+    # check that the path is valid
 
     k_mean(args.K, args.N, args.d, args.MAX_ITER, args.filename)
