@@ -97,9 +97,9 @@ void print_clusters(Cluster **clusters_array, int k, int d) {
         int j;
         for (j = 0; j < d; j++) {
             if (j < d - 1) {
-                printf("%.2f%s", clusters_array[i]->centroid[j], ",");
+                printf("%f%s", clusters_array[i]->centroid[j], ",");
             } else {
-                printf("%.2f", clusters_array[i]->centroid[j]);
+                printf("%f", clusters_array[i]->centroid[j]);
             }
         }
         if (i != k - 1) {

@@ -17,10 +17,8 @@ def k_mean(K, N, d, MAX_ITER, path):
 def create_k_clusters(observations_matrix, N, K, d, centroid_index_arr):
     centroids_matrix = np.full((K, d), 0, dtype=np.float64)
     first_centroid_index = np.random.choice(N, 1)
-    # print(observations_arr)
     centroids_matrix[0] = observations_matrix[first_centroid_index[0]]
     centroid_index_arr[0] = first_centroid_index
-    # print(centroids_matrix)
     find_next_centroids(observations_matrix, centroids_matrix, K, N, centroid_index_arr)
     return centroids_matrix
 
@@ -34,7 +32,7 @@ def find_next_centroids(observations_matrix, centroids_matrix, K, N, centroid_in
         for observation_index in range(N):
             # find ths distance for all observations
             min_d_arr[observation_index] = squared_euclidean_distance(observations_matrix[observation_index],
-                                                                      centroids_matrix, i)
+                                                                      centroids_matrix[:i,])
         min_d_arr = min_d_arr / (min_d_arr.sum())
         next_centroid_index = np.random.choice(N, 1, p=min_d_arr)
         centroid_index_arr[i] = next_centroid_index
@@ -42,10 +40,12 @@ def find_next_centroids(observations_matrix, centroids_matrix, K, N, centroid_in
         i += 1
 
 
-def squared_euclidean_distance(observation, centroids_df, i):
+
+
+def squared_euclidean_distance(observation, centroids_df):
     """find cluster’s centroid using squared Euclidean distance
     observation and centroid are lists of size D"""
-    dist = np.power((centroids_df - observation), 2).sum(axis=1).min()
+    dist = (np.power((centroids_df - observation), 2)).sum(axis=1).min()
     return dist
 
 
