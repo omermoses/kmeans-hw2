@@ -1,14 +1,17 @@
 import argparse
 import pandas as pd
 import numpy as np
+import mykmeanssp as km
 
 
 def k_mean(K, N, d, MAX_ITER, path):
     np.random.seed(0)
-    print("")
     observations_matrix = pd.read_csv(path, sep=',', header=None).to_numpy(dtype=np.float64)
     centroid_index_arr = np.full(K, -1, int)
-    create_k_clusters(observations_matrix, N, K, d, centroid_index_arr)
+    centroids_matrix=create_k_clusters(observations_matrix, N, K, d, centroid_index_arr)
+    ind=[i for i in range(N) if observations_matrix[i] not in centroids_matrix]
+    observations_matrix=(np.concatenate((centroids_matrix, observations_matrix[ind]), axis=0)).tolist()
+    km.run([observations_matrix, K, N, d, MAX_ITER, centroid_index_arr.tolist()])
 
 
 def create_k_clusters(observations_matrix, N, K, d, centroid_index_arr):
@@ -19,6 +22,7 @@ def create_k_clusters(observations_matrix, N, K, d, centroid_index_arr):
     centroid_index_arr[0] = first_centroid_index
     # print(centroids_matrix)
     find_next_centroids(observations_matrix, centroids_matrix, K, N, centroid_index_arr)
+    return centroids_matrix
 
 
 def find_next_centroids(observations_matrix, centroids_matrix, K, N, centroid_index_arr):
