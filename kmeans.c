@@ -144,29 +144,33 @@ static void init(Observation **observations, int n, int d) {
     }
 }
 
-static void convert_obs(Observation **input_values, PyObject *observations, int N, int d){
+static void convert_obs(Observation **input_values, PyObject *observations, int n, int d){
     int i, j;
     PyObject *obs, *val;
-    for (i=0; i<N; i++){
+    Py_ssize_t obs_num, obs_size;
+    obs_num= PyList_Size(observations);
+    for (i=0; i<obs_num; i++){
         obs=PyList_GetItem(observations, i);
         if (!PyList_Check(obs)){
            return;
         }
-        for (j=0; j<d; j++){
+        obs_size=PyList_Size(obs);
+        for (j=0; j<obs_size; j++){
             val=PyList_GetItem(obs, j);
             if (!PyFloat_Check(val)){
                 return;
                 }
             input_values[i]->values[j]=PyFloat_AsDouble(val);
             if (input_values[i]->values[j]== -1 && PyErr_Occurred()){
-            /* float too big to fit in a C double, bail out */
-            puts("Something bad ...");
-            return;
+            /* double too big to fit in a C float, bail out */
+                printf("error");
+//              puts("Something bad ...");
+                return;
             }
-//            printf("%f",PyFloat_AsDouble(val));
         }
     }
 }
+
 
 void clean(Observation **observations, int n, Cluster **cluster_array, int k) {
     int i,j;
