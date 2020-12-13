@@ -9,7 +9,7 @@ def k_mean(K, N, d, MAX_ITER, path):
     observations_matrix = pd.read_csv(path, sep=',', header=None).to_numpy(dtype=np.float64)
     centroid_index_arr = np.full(K, -1, int)
     centroids_matrix=create_k_clusters(observations_matrix, N, K, d, centroid_index_arr)
-    ind=[i for i in range(N) if observations_matrix[i] not in centroids_matrix]
+    ind=[i for i in range(N) if i not in centroid_index_arr]
     observations_matrix=(np.concatenate((centroids_matrix, observations_matrix[ind]), axis=0)).tolist()
     km.run([observations_matrix, K, N, d, MAX_ITER, centroid_index_arr.tolist()])
 
