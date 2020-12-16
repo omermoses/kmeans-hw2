@@ -67,5 +67,4 @@ if __name__ == '__main__':
         exit(1)
 
     # check that the path is valid
-
     k_mean(args.K, args.N, args.d, args.MAX_ITER, args.filename)

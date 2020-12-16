@@ -1,7 +1,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include <assert.h>
 #include "stdlib.h"
 #include "stdio.h"
 
@@ -17,44 +16,48 @@ typedef struct Observation {
 } Observation;
 
 static PyObject* run (PyObject *self, PyObject *args);
+static void print_index(PyObject *index, int K);
 
-static void kmeans(PyObject *observations, int k, int n, int d, int max_iter);
+static int kmeans(PyObject *observations, int k, int n, int d, int max_iter);
 
 static void convert_obs(Observation **input_values, PyObject *observations, int N, int d);
 
-void clean(Observation **observations, int n, Cluster **cluster_array, int k);
+static void clean(Observation **observations, int n, Cluster **cluster_array, int k);
 
-static void init(Observation **observations, int n, int d);
+static int init(Observation **observations, int n, int d);
 
-void find_closest_cluster(Observation *observation, Cluster **clusters_array, int k, int d);
+static void find_closest_cluster(Observation *observation, Cluster **clusters_array, int k, int d);
 
-double squared_euclidean_distance(double *observation, double *centroid, int d);
+static double squared_euclidean_distance(double *observation, double *centroid, int d);
 
-void observation_sum(double *sum_of_obs, double *observation_values, int d);
+static void observation_sum(double *sum_of_obs, double *observation_values, int d);
 
-void observation_sub(double *sum_of_obs, const double *observation_values, int d);
+static void observation_sub(double *sum_of_obs, const double *observation_values, int d);
 
-void remove_obs(Observation *observation,int d) ;
+static void remove_obs(Observation *observation,int d) ;
 
-int update_centroid(Cluster **clusters_array, int k, int d);
+static int update_centroid(Cluster **clusters_array, int k, int d);
 
-void insert_obs(Observation *observation, Cluster *best_cluster, int d);
+static void insert_obs(Observation *observation, Cluster *best_cluster, int d);
 
-void create_k_clusters(Observation **observations, Cluster **clusters_array, int k, int d);
+static int create_k_clusters(Observation **observations, Cluster **clusters_array, int k, int d);
 
-void print_clusters(Cluster **clusters_array, int k, int d);
+static void print_clusters(Cluster **clusters_array, int k, int d);
 
-void copy(const double *values, double *sum_of_obs, int d);
+static void copy(const double *values, double *sum_of_obs, int d);
 
-static void kmeans(PyObject *observations, int k, int n, int d, int max_iter) {
+static int kmeans(PyObject *observations, int k, int n, int d, int max_iter) {
     Observation **input_values;
     int is_changed_from_last_run, found_k_clusters, number_of_iter,obs_num;
     Cluster **clusters_array;
 
     input_values=malloc(n*sizeof(Observation));
-    assert(input_values != NULL);
+    if (input_values==NULL){
+        return -1;
+    }
 
-    init(input_values, n, d);
+    if (init(input_values, n, d)==-1){
+        return -1;}
     convert_obs(input_values, observations, n, d);
 
     is_changed_from_last_run= 1;
@@ -63,8 +66,9 @@ static void kmeans(PyObject *observations, int k, int n, int d, int max_iter) {
     obs_num = k;
 
     clusters_array=malloc(k*sizeof(Cluster));
-    assert(clusters_array != NULL);
-
+    if (clusters_array==NULL){
+        return -1;
+        }
 
     while (is_changed_from_last_run == 1 && (number_of_iter <= max_iter)) {
         /*main loop*/
@@ -75,7 +79,9 @@ static void kmeans(PyObject *observations, int k, int n, int d, int max_iter) {
 
         } else {
             /*initiate k clusters*/
-            create_k_clusters(input_values, clusters_array, k, d);
+            if (create_k_clusters(input_values, clusters_array, k, d)==-1){
+            return -1;
+            }
             found_k_clusters = 1;
         }
         if (obs_num == n) {
@@ -89,9 +95,10 @@ static void kmeans(PyObject *observations, int k, int n, int d, int max_iter) {
     }
     print_clusters(clusters_array, k, d);
     clean(input_values, n, clusters_array, k);
+    return 0;
 }
 
-void print_clusters(Cluster **clusters_array, int k, int d) {
+static void print_clusters(Cluster **clusters_array, int k, int d) {
     int i;
     for (i = 0; i < k; i++) {
         int j;
@@ -108,24 +115,27 @@ void print_clusters(Cluster **clusters_array, int k, int d) {
     }
 }
 
-void create_k_clusters(Observation **observations, Cluster **clusters_array, int k, int d) {
+static int create_k_clusters(Observation **observations, Cluster **clusters_array, int k, int d) {
     int index;
     for (index = 0; index < k; index++) {
         clusters_array[index] = malloc(sizeof(Cluster));
-        assert(clusters_array[index] != NULL);
+        if (clusters_array[index]==NULL){ return -1; }
         clusters_array[index]->name = index;
         clusters_array[index]->size = 1;
         clusters_array[index]->centroid = calloc(d, sizeof(double ));
-        assert(clusters_array[index]->centroid != NULL);
+        if (clusters_array[index]->centroid==NULL){ return -1; }
         copy(observations[index]->values, clusters_array[index]->centroid, d);
         clusters_array[index]->sum_of_obs = calloc(d, sizeof(double ));
-        assert(clusters_array[index]->sum_of_obs != NULL);
+        if (clusters_array[index]->sum_of_obs ==NULL){
+            return -1;
+        }
         copy(observations[index]->values, clusters_array[index]->sum_of_obs, d);
         observations[index]->cluster=clusters_array[index];
-    };
+    }
+    return 0;
 }
 
-void copy(const double *values, double *sum_of_obs, int d) {
+static void copy(const double *values, double *sum_of_obs, int d) {
     int i;
     for (i=0; i<d; i++){
         sum_of_obs[i]=values[i];
@@ -133,15 +143,20 @@ void copy(const double *values, double *sum_of_obs, int d) {
 
 }
 
-static void init(Observation **observations, int n, int d) {
+static int init(Observation **observations, int n, int d) {
     int i;
     for (i = 0; i < n; i++) {
         observations[i] = malloc(sizeof(Observation));
-        assert(observations[i] != NULL);
+        if (observations[i]==NULL){
+            return -1;
+        }
         observations[i]->values = (double *) calloc(d, sizeof(double));
-        assert(observations[i]->values != NULL);
+        if (observations[i]->values==NULL){
+            return -1;
+            }
         observations[i]->cluster = NULL;
     }
+    return 0;
 }
 
 static void convert_obs(Observation **input_values, PyObject *observations, int n, int d){
@@ -164,7 +179,6 @@ static void convert_obs(Observation **input_values, PyObject *observations, int 
             if (input_values[i]->values[j]== -1 && PyErr_Occurred()){
             /* double too big to fit in a C float, bail out */
                 printf("error");
-//              puts("Something bad ...");
                 return;
             }
         }
@@ -172,7 +186,7 @@ static void convert_obs(Observation **input_values, PyObject *observations, int 
 }
 
 
-void clean(Observation **observations, int n, Cluster **cluster_array, int k) {
+static void clean(Observation **observations, int n, Cluster **cluster_array, int k) {
     int i,j;
     for (i = 0; i < n; i++) {
         free(observations[i]->values);
@@ -189,7 +203,7 @@ void clean(Observation **observations, int n, Cluster **cluster_array, int k) {
 }
 
 
-void find_closest_cluster(Observation *observation, Cluster **clusters_array, int k, int d) {
+static void find_closest_cluster(Observation *observation, Cluster **clusters_array, int k, int d) {
     /*find closest cluster for observation (of class Observation)
     size of clusters_array is K, each index is of struct Cluster */
 
@@ -215,7 +229,7 @@ void find_closest_cluster(Observation *observation, Cluster **clusters_array, in
     insert_obs(observation, best_cluster, d);
 }
 
-double squared_euclidean_distance(double *observation, double *centroid, int d){
+static double squared_euclidean_distance(double *observation, double *centroid, int d){
     /*find cluster’s centroid using squared Euclidean distance
     observation and centroid are lists of size D*/
     int index;
@@ -230,7 +244,7 @@ double squared_euclidean_distance(double *observation, double *centroid, int d){
     return dist;
 }
 
-void observation_sum(double *sum_of_obs, double *observation_values, int d){
+static void observation_sum(double *sum_of_obs, double *observation_values, int d){
     /* sum_of_obs is a list in len D that sums all observations that belongs to the cluster*/
     int index;
     for (index=0; index<d; index++){
@@ -238,13 +252,13 @@ void observation_sum(double *sum_of_obs, double *observation_values, int d){
     }
 }
 
-void insert_obs(Observation *observation, Cluster *best_cluster, int d) {
+static void insert_obs(Observation *observation, Cluster *best_cluster, int d) {
     observation_sum(best_cluster->sum_of_obs, observation->values, d);
     best_cluster->size++;
     observation->cluster = best_cluster;
 }
 
-void observation_sub(double *sum_of_obs, const double *observation_values, int d) {
+static void observation_sub(double *sum_of_obs, const double *observation_values, int d) {
     /*update sum_of_obs sum_of_obs is a list in len D that sums all observations that belongs to the cluster*/
     int index;
     for (index=0; index < d; index++){
@@ -252,12 +266,12 @@ void observation_sub(double *sum_of_obs, const double *observation_values, int d
     }
 }
 
-void remove_obs(Observation *observation,int d) {
+static void remove_obs(Observation *observation,int d) {
     observation->cluster->size -= 1;
     observation_sub(observation->cluster->sum_of_obs, observation->values, d);
 }
 
-int update_centroid(Cluster **clusters_array, int k, int d){
+static int update_centroid(Cluster **clusters_array, int k, int d){
     /*update centroid using the sum of observations that belongs to the cluster */
     int dpoint;
     int cluster_index;
@@ -281,23 +295,33 @@ int update_centroid(Cluster **clusters_array, int k, int d){
     return is_changed;
 }
 
-static PyObject* run (PyObject *self, PyObject *args){
+static void print_index(PyObject *index, int K){
     int i;
-    int K,N,d,MAX_ITER;
-    PyObject *input_observation, *index, *ind;
-    if(!PyArg_ParseTuple(args, "(OiiiiO):run", &input_observation, &K, &N, &d, &MAX_ITER, &index)) {
-        return PyErr_Format(PyExc_ValueError, "error in args");
-    }
-    if (!PyList_Check(input_observation)){
-        return PyErr_Format(PyExc_ValueError, "not a list");
-    }
+    PyObject *ind;
     for (i=0; i<K-1; i++){
         ind=PyList_GetItem(index, i);
         printf("%ld%s", PyLong_AsLong(ind),",");
     }
     ind=PyList_GetItem(index, K-1);
     printf("%ld\n", PyLong_AsLong(ind));
-    kmeans(input_observation, K, N, d, MAX_ITER);
+}
+
+static PyObject* run (PyObject *self, PyObject *args){
+    int K,N,d,MAX_ITER;
+    PyObject *input_observation, *index;
+    if(!PyArg_ParseTuple(args, "(OiiiiO):run", &input_observation, &K, &N, &d, &MAX_ITER, &index)) {
+        return PyErr_Format(PyExc_ValueError, "error in args");
+    }
+    if (!PyList_Check(input_observation)){
+        return PyErr_Format(PyExc_ValueError, "not a list");
+    }
+     if (!PyList_Check(index)){
+        return PyErr_Format(PyExc_ValueError, "not a list");
+    }
+    print_index(index, K);
+    if (kmeans(input_observation, K, N, d, MAX_ITER)==-1){
+        PyErr_Format(PyExc_ValueError, "malloc failed");
+    };
     Py_RETURN_NONE;
     }
 
