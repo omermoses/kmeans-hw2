@@ -38,16 +38,6 @@ def find_next_centroids(observations_matrix, centroids_matrix, K, N, centroid_in
         centroids_matrix[i] = observations_matrix[next_centroid_index]
         distance_matrix[i]=squared_euclidean_distance(observations_matrix, centroids_matrix[i])
         i += 1
-        # min_d_arr = np.empty(N)
-        # for observation_index in range(N):
-        #     # find ths distance for all observations
-        #     min_d_arr[observation_index] = squared_euclidean_distance(observations_matrix[observation_index],
-        #                                                               centroids_matrix[:i, ])
-        # min_d_arr = min_d_arr / (min_d_arr.sum())
-        # next_centroid_index = np.random.choice(N, 1, p=min_d_arr)
-        # centroid_index_arr[i] = next_centroid_index
-        # centroids_matrix[i] = observations_matrix[next_centroid_index]
-        # i += 1
 
 
 def squared_euclidean_distance(observation, centroids_df):
