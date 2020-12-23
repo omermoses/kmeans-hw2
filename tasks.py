@@ -3,7 +3,7 @@ from invoke import task, call
 from timeit import timeit
 
 @task
-def clean(c, extra=''):
+def delete(c, extra=''):
     patterns = ['*.so']
     if extra:
         patterns.append(extra)
