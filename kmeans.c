@@ -160,6 +160,9 @@ static int init(Observation **observations, int n, int d) {
 }
 
 static void convert_obs(Observation **input_values, PyObject *observations, int n, int d){
+    /*
+    * convert the PyObject type observations to arrys of type double
+    */
     int i, j;
     PyObject *obs, *val;
     Py_ssize_t obs_num, obs_size;
@@ -296,6 +299,7 @@ static int update_centroid(Cluster **clusters_array, int k, int d){
 }
 
 static void print_index(PyObject *index, int K){
+    /*print  the indexes of the the observations chosen to be clusters */
     int i;
     PyObject *ind;
     for (i=0; i<K-1; i++){
@@ -307,6 +311,19 @@ static void print_index(PyObject *index, int K){
 }
 
 static PyObject* run (PyObject *self, PyObject *args){
+    /*
+    * this function is the module's endpoint for communicating with python script
+    * the function calculates kmeans algorithm and prints it to the requested file.
+    * args:
+        input_observation - matrix of observation where the first k observation are the clusters
+        K - number of centroids required
+        N - number of observations
+        d - the dimension of each observation
+        MAX - max iterations the script should do
+        index - the indexes of the the observations chosen to be clusters
+    * returnes None if the process ended successfully
+    */
+
     int K,N,d,MAX_ITER;
     PyObject *input_observation, *index;
     if(!PyArg_ParseTuple(args, "(OiiiiO):run", &input_observation, &K, &N, &d, &MAX_ITER, &index)) {
@@ -320,7 +337,7 @@ static PyObject* run (PyObject *self, PyObject *args){
     }
     print_index(index, K);
     if (kmeans(input_observation, K, N, d, MAX_ITER)==-1){
-        PyErr_Format(PyExc_ValueError, "malloc failed");
+        PyErr_Format(PyExc_ValueError, "Running Kmeans calculation using c module has failed");
     };
     Py_RETURN_NONE;
     }
