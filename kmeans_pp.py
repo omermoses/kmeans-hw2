@@ -5,6 +5,18 @@ import mykmeanssp as km
 
 
 def k_mean(K, N, d, MAX_ITER, path):
+    """
+    This function crates arranges the data to be:
+        K clusters would be the k first lines at the matrix
+        next N-K observations would be none clustered observation
+    eventually the function calculates Kmeans algorithm using c module
+    args:
+        K - number of centroids required
+        N - number of observations
+        d - the dimension of each observation
+        MAX - max iterations the script should do
+        path - path to the data
+    """
     np.random.seed(0)
     observations_matrix = pd.read_csv(path, sep=',', header=None).to_numpy(dtype=np.float64)
     centroid_index_arr = np.empty(K, int)
